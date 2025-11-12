@@ -19,41 +19,33 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {" "}
       <body>
-        {" "}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          {" "}
           <SidebarProvider>
-            {" "}
             <div className="flex min-h-screen w-full">
-              {" "}
-              {/* Sidebar tetap di kiri */} <AppSidebar /> {/* Area konten */}{" "}
+              <AppSidebar />
               <div className="flex flex-col flex-1">
-                {" "}
-                {/* Header */}{" "}
                 <header className="flex items-center justify-between p-4 border-b">
-                  {" "}
-                  <SidebarTrigger />{" "}
-                  <SidebarHeader className="text-lg flex flex-row items-center">
+                  <SidebarTrigger />
+                  <SidebarHeader className="text-lg font-bold flex flex-row items-center">
                     <IoFlash className="text-yellow-400" />
                     Ekstrama Mitra Mandiri
                     <IoFlash className="text-yellow-400" />
-                  </SidebarHeader>{" "}
-                  <ModeToggle />{" "}
-                </header>{" "}
-                {/* Main content */}{" "}
-                <main className="flex-1 p-4">{children}</main>{" "}
-              </div>{" "}
-            </div>{" "}
-          </SidebarProvider>{" "}
-        </ThemeProvider>{" "}
-      </body>{" "}
+                  </SidebarHeader>
+                  <ModeToggle />
+                </header>
+
+                <main className="flex-1 p-4">{children}</main>
+              </div>
+            </div>
+          </SidebarProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
