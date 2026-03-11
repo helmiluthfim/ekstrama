@@ -20,33 +20,49 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { NavMain } from "./nav-main";
 
-const items = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Form",
-    url: "/form",
-    icon: Biohazard,
-  },
-];
+const data = {
+  main: [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: Home,
+    },
+  ],
+  izinKerja: [
+    {
+      title: "Ajukan Izin Kerja",
+      icon: Biohazard,
+      isActive: true,
+      items: [
+        { title: "Work Permit", url: "/form/work-permits" },
+        { title: "Job Safety Analysis", url: "/form/jsa" },
+        { title: "HIRARC", url: "/form/hirarc" },
+        { title: "SOP", url: "/form/sop" },
+        { title: "Instruksi Kerja", url: "/form/intruksi-kerja" },
+      ],
+    },
+  ],
+};
 
-export default function AppSidebar() {
+export default function AppSidebar(
+  props: React.ComponentProps<typeof Sidebar>,
+) {
   const pathname = usePathname();
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <h1 className="px-4 text-lg font-semibold">Ekstrama</h1>
+      </SidebarHeader>
+
       <SidebarContent>
-        <SidebarHeader>
-          <h1>Ekstrama</h1>
-        </SidebarHeader>
         <SidebarGroup>
           <SidebarGroupContent>
+            {/* Dashboard */}
             <SidebarMenu>
-              {items.map((item) => (
+              {data.main.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
                     <Link href={item.url}>
@@ -57,6 +73,9 @@ export default function AppSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+
+            {/* Ajukan Izin Kerja */}
+            <NavMain items={data.izinKerja} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -67,23 +86,19 @@ export default function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> Username
+                  <User2 />
+                  Username
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Sign out</span>
-                </DropdownMenuItem>
+                <DropdownMenuItem>Account</DropdownMenuItem>
+                <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuItem>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
