@@ -1,6 +1,6 @@
 "use client";
 
-import { Biohazard, ChevronUp, Home, User2 } from "lucide-react";
+import { ChevronUp, Home, SquarePen, User2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,19 +29,10 @@ const data = {
       url: "/dashboard",
       icon: Home,
     },
-  ],
-  izinKerja: [
     {
       title: "Ajukan Izin Kerja",
-      icon: Biohazard,
-      isActive: true,
-      items: [
-        { title: "Work Permit", url: "/form/work-permits" },
-        { title: "Job Safety Analysis", url: "/form/jsa" },
-        { title: "HIRARC", url: "/form/hirarc" },
-        { title: "SOP", url: "/form/sop" },
-        { title: "Instruksi Kerja", url: "/form/intruksi-kerja" },
-      ],
+      url: "/form/work-permits",
+      icon: SquarePen,
     },
   ],
 };
@@ -53,10 +44,6 @@ export default function AppSidebar(
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <h1 className="px-4 text-lg font-semibold">Ekstrama</h1>
-      </SidebarHeader>
-
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -73,9 +60,6 @@ export default function AppSidebar(
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-
-            {/* Ajukan Izin Kerja */}
-            <NavMain items={data.izinKerja} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
