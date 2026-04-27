@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IWorkPermit extends Document {
+export interface IJSA extends Document {
   penanggungJawabTeknik: string;
   tenagaAhliK3: string;
   jenisPekerjaan: string;
@@ -42,7 +42,7 @@ export interface IWorkPermit extends Document {
   approvedAt?: Date | null;
 }
 
-const workPermitSchema = new Schema<IWorkPermit>(
+const jsaSchema = new Schema<IJSA>(
   {
     penanggungJawabTeknik: { type: String, required: true },
     tenagaAhliK3: { type: String, required: true },
@@ -102,8 +102,6 @@ const workPermitSchema = new Schema<IWorkPermit>(
   },
 );
 
-const WorkPermit =
-  mongoose.models.WorkPermit ||
-  mongoose.model<IWorkPermit>("WorkPermit", workPermitSchema);
+const JSA = mongoose.models.JSA || mongoose.model<IJSA>("JSA", jsaSchema);
 
-export default WorkPermit;
+export default JSA;

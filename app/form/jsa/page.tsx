@@ -21,17 +21,18 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
-interface IWorkPermit {
+interface IJSA {
   penanggungJawabTeknik: string;
   tenagaAhliK3: string;
   jenisPekerjaan: string;
   lokasi: string;
   startAt: string;
   endAt: string;
+  pelaksana_pekerjaan: string;
   klasifikasiPekerjaan: {
     bertegangan_listrik: boolean;
     confined_space: boolean;
@@ -68,6 +69,7 @@ interface IWorkPermit {
 
 export default function Page() {
   const router = useRouter();
+
   const getCurrentTime = (offsetHours = 0) => {
     const now = new Date();
     now.setHours(now.getHours() + offsetHours);
@@ -80,6 +82,7 @@ export default function Page() {
     from: new Date(),
     to: new Date(),
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State khusus untuk error kustom (Waktu & Checkbox)
   const [dateError, setDateError] = useState("");
@@ -93,7 +96,7 @@ export default function Page() {
     reset,
     control,
     formState: { errors }, // Ambil state errors dari useForm
-  } = useForm<IWorkPermit>({
+  } = useForm<IJSA>({
     defaultValues: {
       klasifikasiPekerjaan: {
         bertegangan_listrik: false,
@@ -127,7 +130,16 @@ export default function Page() {
     },
   });
 
-  const onSubmit: SubmitHandler<IWorkPermit> = async (data) => {
+  // Cek apakah data work-permit sudah ada di localStorage
+  useEffect(() => {
+    const workPermitData = localStorage.getItem("workPermitData");
+    if (!workPermitData) {
+      alert("Harap isi form Work Permit terlebih dahulu!");
+      router.push("/form/work-permits");
+    }
+  }, [router]);
+
+  const onSubmit: SubmitHandler<IJSA> = async (data) => {
     try {
       // Reset semua error kustom di awal pengecekan
       setDateError("");
@@ -185,7 +197,7 @@ export default function Page() {
       const formattedStartAt = `${startDateStr}T${startTime}:00`;
       const formattedEndAt = `${endDateStr}T${endTime}:00`;
 
-      const payload = {
+      const jsaPayload = {
         ...data,
         startAt: formattedStartAt,
         endAt: formattedEndAt,
@@ -194,14 +206,64 @@ export default function Page() {
         approvedAt: null,
       };
 
-      // Simpan data work-permit ke localStorage untuk dikirim bersama JSA nanti
-      localStorage.setItem("workPermitData", JSON.stringify(payload));
+      // Ambil data work-permit dari localStorage
+      const workPermitDataStr = localStorage.getItem("workPermitData");
+      if (!workPermitDataStr) {
+        alert("Data Work Permit tidak ditemukan! Harap isi form Work Permit terlebih dahulu.");
+        router.push("/form/work-permits");
+        return;
+      }
 
-      // Navigasi ke halaman JSA
-      router.push("/form/jsa");
+      const workPermitPayload = JSON.parse(workPermitDataStr);
+
+      setIsSubmitting(true);
+
+      // Kirim kedua data ke database secara bersamaan
+      const [workPermitRes, jsaRes] = await Promise.all([
+        fetch("/api/work-permit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(workPermitPayload),
+        }),
+        fetch("/api/jsa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jsaPayload),
+        }),
+      ]);
+
+      const workPermitResult = await workPermitRes.json();
+      const jsaResult = await jsaRes.json();
+
+      if (
+        (workPermitResult.success || workPermitRes.ok) &&
+        (jsaResult.success || jsaRes.ok)
+      ) {
+        alert("Data Work Permit dan JSA berhasil disimpan!");
+        // Bersihkan localStorage
+        localStorage.removeItem("workPermitData");
+        // Reset form
+        setDate({ from: new Date(), to: new Date() });
+        setStartTime(getCurrentTime(0));
+        setEndTime(getCurrentTime(1));
+        reset();
+        // Navigasi kembali ke halaman awal atau halaman berikutnya
+        router.push("/form/work-permits");
+      } else {
+        const errors = [];
+        if (!workPermitResult.success && !workPermitRes.ok) {
+          errors.push("Work Permit: " + (workPermitResult.error || "Gagal"));
+        }
+        if (!jsaResult.success && !jsaRes.ok) {
+          errors.push("JSA: " + (jsaResult.error || "Gagal"));
+        }
+        alert("Gagal menyimpan data:\n" + errors.join("\n"));
+      }
     } catch (error) {
       console.error(error);
       alert("Terjadi kesalahan sistem.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -211,6 +273,25 @@ export default function Page() {
       className="flex flex-col gap-6 max-w-lg p-4"
     >
       <FieldGroup>
+        {/* Pelaksana Pekerjaan - Field khusus JSA */}
+        <Field>
+          <FieldLabel>
+            Pelaksana Pekerjaan <span className="text-red-500">*</span>
+          </FieldLabel>
+          <Input
+            {...register("pelaksana_pekerjaan", {
+              required: "Pelaksana Pekerjaan wajib diisi",
+            })}
+            placeholder="Masukan Nama Pelaksana Pekerjaan"
+            className={errors.pelaksana_pekerjaan ? "border-red-500" : ""}
+          />
+          {errors.pelaksana_pekerjaan && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.pelaksana_pekerjaan.message}
+            </p>
+          )}
+        </Field>
+
         {/* Penanggung Jawab Teknik */}
         <Field>
           <FieldLabel>
@@ -559,9 +640,10 @@ export default function Page() {
 
       <button
         type="submit"
-        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        disabled={isSubmitting}
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Selanjutnya
+        {isSubmitting ? "Menyimpan..." : "Simpan"}
       </button>
     </form>
   );
